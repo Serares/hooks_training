@@ -4,6 +4,7 @@ import IngredientForm from "./IngredientForm";
 import IngredientList from "./IngredientList";
 import Search from "./Search";
 import ErrorModal from '../UI/ErrorModal';
+import requestUrl from '../../request';
 
 function Ingredients() {
   const [ingredients, setIngredients] = useState([]);
@@ -16,7 +17,7 @@ function Ingredients() {
 
   const addIngredient = ingredient => {
     setIsLoading(true);
-    fetch('https://proiect-agenda.firebaseio.com/ingredients.jon', {
+    fetch(requestUrl.url + '.jon', {
       method: 'POST',
       body: JSON.stringify(ingredient),
       headers: { 'Content-Type': 'application/json' }
@@ -31,14 +32,14 @@ function Ingredients() {
           { id: responseData.name, ...ingredient }
         ]);
       })
-      .catch(err=>{
-          setError(err.message);
+      .catch(err => {
+        setError(err.message);
       });
   };
 
   const removeIngredient = (ingId, elem) => {
     let newIngredients = [];
-    fetch(`https://proiect-agenda.firebaseio.com/ingredients/${ingId}.json`, {
+    fetch(`${requestUrl.url}/${ingId}.json`, {
       method: 'DELETE'
     }).then(response => {
       if (ingredients.length > 0) {
@@ -55,14 +56,14 @@ function Ingredients() {
     setIngredients(filteredIngredients);
   }, []);
 
-  const clearError = () =>{
+  const clearError = () => {
     setError(null);
     setIsLoading(false);
   }
 
   return (
     <div className="App">
-      {error &&<ErrorModal onClose={clearError}>{error}</ErrorModal> }
+      {error && <ErrorModal onClose={clearError}>{error}</ErrorModal>}
       <IngredientForm onAddIngredient={addIngredient} loading={isLoading} />
 
       <section>
