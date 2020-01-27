@@ -3,21 +3,26 @@ import React, { useState, useEffect, useCallback } from "react";
 import IngredientForm from "./IngredientForm";
 import IngredientList from "./IngredientList";
 import Search from "./Search";
+import ErrorModal from '../UI/ErrorModal';
 
 function Ingredients() {
   const [ingredients, setIngredients] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState();
 
   useEffect(() => {
     console.log("RENDER ELEMENTS");
   }, [ingredients]);
 
   const addIngredient = ingredient => {
-    fetch('https://proiect-agenda.firebaseio.com/ingredients.json', {
+    setIsLoading(true);
+    fetch('https://proiect-agenda.firebaseio.com/ingredients.jon', {
       method: 'POST',
       body: JSON.stringify(ingredient),
       headers: { 'Content-Type': 'application/json' }
     })
       .then(response => {
+        setIsLoading(false);
         return response.json();
       })
       .then(responseData => {
@@ -25,6 +30,9 @@ function Ingredients() {
           ...prevIngredients,
           { id: responseData.name, ...ingredient }
         ]);
+      })
+      .catch(err=>{
+          setError(err.message);
       });
   };
 
@@ -47,10 +55,15 @@ function Ingredients() {
     setIngredients(filteredIngredients);
   }, []);
 
+  const clearError = () =>{
+    setError(null);
+    setIsLoading(false);
+  }
 
   return (
     <div className="App">
-      <IngredientForm onAddIngredient={addIngredient} />
+      {error &&<ErrorModal onClose={clearError}>{error}</ErrorModal> }
+      <IngredientForm onAddIngredient={addIngredient} loading={isLoading} />
 
       <section>
         <Search filterIngredients={filterIngredients} />
