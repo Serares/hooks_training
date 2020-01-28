@@ -14,33 +14,52 @@ const ingredientReducer = (currentIngredients, action) => {
     case 'ADD':
       return [...currentIngredients, action.ingredient];
     case 'DELETE':
-      return currentIngredients.filter(ing => ing.id !== action.id)
+      return currentIngredients.filter(ing => ing.id !== action.id);
     default:
       throw new Error("should not get here");
   }
+
+};
+
+const httpReducer = (currentHttpState, action)=>{
+
+  switch(action.type){
+    case 'SEND':
+      return {loading: true, error:null};
+    case 'RESPONSE':
+      return {...currentHttpState, loading: false};
+    case 'ERROR':
+      return {loading:false, error: action.errorData};
+      case 'CLEAR':
+      return {...currentHttpState ,error: null};
+    default:
+      throw new Error("should not be reached")
+  }
+
 
 }
 
 function Ingredients() {
   const [userIngredients, dispatch] = useReducer(ingredientReducer, []);
+  const [httpState, dispatchHttp] = useReducer(httpReducer, {loading:false, error:null});
 
-  const [ingredients, setIngredients] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState();
+  // const [ingredients, setIngredients] = useState([]);
+  // const [isLoading, setIsLoading] = useState(false);
+  // const [error, setError] = useState();
 
   useEffect(() => {
     console.log("RENDER ELEMENTS");
-  }, [ingredients]);
+  }, [userIngredients]);
 
   const addIngredient = ingredient => {
-    setIsLoading(true);
+    dispatchHttp({type:'SEND'});
     fetch(requestUrl.url + '.json', {
       method: 'POST',
       body: JSON.stringify(ingredient),
       headers: { 'Content-Type': 'application/json' }
     })
       .then(response => {
-        setIsLoading(false);
+        dispatchHttp({type:"RESPONSE"});
         return response.json();
       })
       .then(responseData => {
@@ -51,7 +70,7 @@ function Ingredients() {
         dispatch({ type: "ADD", ingredient: { id: responseData.name, ...ingredient } })
       })
       .catch(err => {
-        setError(err.message);
+        dispatchHttp({type:"ERROR", errorData:err.message});
       });
   };
 
@@ -77,14 +96,13 @@ function Ingredients() {
   }, []);
 
   const clearError = () => {
-    setError(null);
-    setIsLoading(false);
+    dispatchHttp({type:"CLEAR"});
   }
 
   return (
     <div className="App">
-      {error && <ErrorModal onClose={clearError}>{error}</ErrorModal>}
-      <IngredientForm onAddIngredient={addIngredient} loading={isLoading} />
+      {httpState.error && <ErrorModal onClose={clearError}>{httpState.error}</ErrorModal>}
+      <IngredientForm onAddIngredient={addIngredient} loading={httpState.loading} />
 
       <section>
         <Search filterIngredients={filterIngredients} />
